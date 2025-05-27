@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Security Audit Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #1e3c72;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            font-weight: 700;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 30px;
+            align-items: start;
+        }
+
+        .sidebar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 20px;
+        }
+
+        .audit-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-item {
+            display: block;
+            width: 100%;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            text-align: center;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .nav-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .section h2 {
+            color: #1e3c72;
+            margin-bottom: 25px;
+            font-size: 2em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .input-group input, .input-group textarea, .input-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e8ed;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .input-group input:focus, .input-group textarea:focus, .input-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        }
+
+        .btn-danger:hover {
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
+        }
+
+        .results {
+            margin-top: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border-left: 5px solid #667eea;
+            display: none;
+        }
+
+        .results.show {
+            display: block;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .vulnerability {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 5px solid #ff6b6b;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .vulnerability.low {
+            border-left-color: #28a745;
+        }
+
+        .vulnerability.medium {
+            border-left-color: #ffc107;
+        }
+
+        .vulnerability.high {
+            border-left-color: #fd7e14;
+        }
+
+        .vulnerability.critical {
+            border-left-color: #dc3545;
+        }
+
+        .vuln-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .vuln-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .severity-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-left: auto;
+        }
+
+        .severity-badge.low {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .severity-badge.medium {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .severity-badge.high {
+            background: #ffeaa7;
+            color: #e17055;
+        }
+
+        .severity-badge.critical {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .vuln-description {
+            color: #666;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .remediation {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 3px solid #28a745;
+        }
+
+        .remediation h4 {
+            color: #155724;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+
+        .remediation ul {
+            margin-left: 20px;
+            color: #155724;
+        }
+
+        .remediation li {
+            margin-bottom: 5px;
+        }
+
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border-top: 4px solid #667eea;
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: 700;
+            color: #1e3c72;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e1e8ed;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 2s ease;
+        }
+
+        .port-scanner {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .scan-results {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e1e8ed;
+            border-radius: 8px;
+            padding: 15px;
+            background: #f8f9fa;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                position: static;
+                order: 2;
+            }
+            
+            .port-scanner {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛡️ Network Security Audit Tool</h1>
+            <p>Comprehensive vulnerability assessment and security analysis platform</p>
+        </div>
+
+        <div class="main-content">
+            <div class="sidebar">
+                <button class="nav-item active" onclick="showSection('overview')">🏠 Overview</button>
+                <button class="nav-item" onclick="showSection('port-scan')">🔍 Port Scanner</button>
+                <button class="nav-item" onclick="showSection('vuln-assess')">⚠️ Vulnerability Assessment</button>
+                <button class="nav-item" onclick="showSection('ssl-check')">🔒 SSL/TLS Analysis</button>
+                <button class="nav-item" onclick="showSection('password-audit')">🔑 Password Audit</button>
+                <button class="nav-item" onclick="showSection('compliance')">📋 Compliance Check</button>
+                <button class="nav-item" onclick="showSection('reports')">📊 Reports</button>
+            </div>
+
+            <div class="audit-section">
+                <!-- Overview Section -->
+                <div id="overview" class="section active">
+                    <h2>Security Audit Overview</h2>
+                    <div class="summary-stats">
+                        <div class="stat-card">
+                            <div class="stat-number" id="total-hosts">0</div>
+                            <div class="stat-label">Hosts Scanned</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="open-ports">0</div>
+                            <div class="stat-label">Open Ports</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="vulnerabilities">0</div>
+                            <div class="stat-label">Vulnerabilities</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="risk-score">0</div>
+                            <div class="stat-label">Risk Score</div>
+                        </div>
+                    </div>
+                    
+                    <h3>Quick Start Guide</h3>
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-top: 15px;">
+                        <ol style="margin-left: 20px; line-height: 1.8;">
+                            <li><strong>Port Scanner:</strong> Identify open ports and services on target hosts</li>
+                            <li><strong>Vulnerability Assessment:</strong> Scan for common security vulnerabilities</li>
+                            <li><strong>SSL/TLS Analysis:</strong> Check certificate validity and cipher strength</li>
+                            <li><strong>Password Audit:</strong> Evaluate password policies and strength</li>
+                            <li><strong>Compliance Check:</strong> Verify adherence to security standards</li>
+                            <li><strong>Reports:</strong> Generate comprehensive security reports</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <!-- Port Scanner Section -->
+                <div id="port-scan" class="section">
+                    <h2>Port Scanner</h2>
+                    <div class="port-scanner">
+                        <div>
+                            <div class="input-group">
+                                <label for="target-host">Target Host/IP</label>
+                                <input type="text" id="target-host" placeholder="192.168.1.1 or example.com" value="192.168.1.1">
+                            </div>
+                            <div class="input-group">
+                                <label for="port-range">Port Range</label>
+                                <input type="text" id="port-range" placeholder="1-1000 or 80,443,22" value="1-100">
+                            </div>
+                            <div class="input-group">
+                                <label for="scan-type">Scan Type</label>
+                                <select id="scan-type">
+                                    <option value="tcp">TCP Connect</option>
+                                    <option value="syn">SYN Stealth</option>
+                                    <option value="udp">UDP Scan</option>
+                                    <option value="comprehensive">Comprehensive</option>
+                                </select>
+                            </div>
+                            <button class="btn" onclick="startPortScan()">Start Port Scan</button>
+                        </div>
+                        <div class="scan-results" id="port-results">
+                            <p style="color: #666; text-align: center;">Port scan results will appear here...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vulnerability Assessment Section -->
+                <div id="vuln-assess" class="section">
+                    <h2>Vulnerability Assessment</h2>
+                    <div class="input-group">
+                        <label for="vuln-target">Target System</label>
+                        <input type="text" id="vuln-target" placeholder="IP address or hostname" value="192.168.1.100">
+                    </div>
+                    <div class="input-group">
+                        <label for="vuln-type">Assessment Type</label>
+                        <select id="vuln-type">
+                            <option value="basic">Basic Vulnerability Scan</option>
+                            <option value="web">Web Application Scan</option>
+                            <option value="network">Network Infrastructure</option>
+                            <option value="database">Database Security</option>
+                            <option value="comprehensive">Comprehensive Assessment</option>
+                        </select>
+                    </div>
+                    <button class="btn" onclick="startVulnAssessment()">Start Assessment</button>
+                    <button class="btn btn-danger" onclick="stopScan()">Stop Scan</button>
+                    
+                    <div class="results" id="vuln-results"></div>
+                </div>
+
+                <!-- SSL/TLS Analysis Section -->
+                <div id="ssl-check" class="section">
+                    <h2>SSL/TLS Certificate Analysis</h2>
+                    <div class="input-group">
+                        <label for="ssl-host">Target Host</label>
+                        <input type="text" id="ssl-host" placeholder="example.com" value="google.com">
+                    </div>
+                    <div class="input-group">
+                        <label for="ssl-port">Port</label>
+                        <input type="number" id="ssl-port" value="443" min="1" max="65535">
+                    </div>
+                    <button class="btn" onclick="analyzeSSL()">Analyze SSL/TLS</button>
+                    
+                    <div class="results" id="ssl-results"></div>
+                </div>
+
+                <!-- Password Audit Section -->
+                <div id="password-audit" class="section">
+                    <h2>Password Security Audit</h2>
+                    <div class="input-group">
+                        <label for="password-list">Password List (one per line)</label>
+                        <textarea id="password-list" rows="8" placeholder="Enter passwords to audit...
+password123
+admin
+123456
+qwerty
+letmein"></textarea>
+                    </div>
+                    <div class="input-group">
+                        <label for="policy-rules">Password Policy Rules</label>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 10px;">
+                            <label><input type="checkbox" id="min-length" checked> Minimum 8 characters</label>
+                            <label><input type="checkbox" id="uppercase" checked> Uppercase letters</label>
+                            <label><input type="checkbox" id="lowercase" checked> Lowercase letters</label>
+                            <label><input type="checkbox" id="numbers" checked> Numbers</label>
+                            <label><input type="checkbox" id="special-chars" checked> Special characters</label>
+                            <label><input type="checkbox" id="no-dictionary" checked> No dictionary words</label>
+                        </div>
+                    </div>
+                    <button class="btn" onclick="auditPasswords()">Audit Passwords</button>
+                    
+                    <div class="results" id="password-results"></div>
+                </div>
+
+                <!-- Compliance Check Section -->
+                <div id="compliance" class="section">
+                    <h2>Compliance & Standards Check</h2>
+                    <div class="input-group">
+                        <label for="compliance-standard">Compliance Standard</label>
+                        <select id="compliance-standard">
+                            <option value="pci-dss">PCI DSS</option>
+                            <option value="hipaa">HIPAA</option>
+                            <option value="sox">SOX</option>
+                            <option value="iso27001">ISO 27001</option>
+                            <option value="nist">NIST Cybersecurity Framework</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="system-config">System Configuration (JSON)</label>
+                        <textarea id="system-config" rows="6" placeholder='{"firewall": true, "encryption": "AES-256", "logging": true, "access_control": true}'></textarea>
+                    </div>
+                    <button class="btn" onclick="checkCompliance()">Check Compliance</button>
+                    
+                    <div class="results" id="compliance-results"></div>
+                </div>
+
+                <!-- Reports Section -->
+                <div id="reports" class="section">
+                    <h2>Security Reports</h2>
+                    <div class="input-group">
+                        <label for="report-type">Report Type</label>
+                        <select id="report-type">
+                            <option value="executive">Executive Summary</option>
+                            <option value="technical">Technical Details</option>
+                            <option value="compliance">Compliance Report</option>
+                            <option value="remediation">Remediation Plan</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="report-format">Export Format</label>
+                        <select id="report-format">
+                            <option value="html">HTML Report</option>
+                            <option value="json">JSON Data</option>
+                            <option value="csv">CSV Export</option>
+                        </select>
+                    </div>
+                    <button class="btn" onclick="generateReport()">Generate Report</button>
+                    <button class="btn" onclick="exportReport()">Export Report</button>
+                    
+                    <div class="results" id="report-results"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables to store scan data
+        let scanData = {
+            hosts: [],
+            openPorts: [],
+            vulnerabilities: [],
+            sslResults: [],
+            passwordAudit: [],
+            complianceResults: []
+        };
+
+        // Navigation
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Remove active class from all nav items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(sectionId).classList.add('active');
+            
+            // Add active class to clicked nav item
+            event.target.classList.add('active');
+        }
+
+        // Port Scanner
+        function startPortScan() {
+            const host = document.getElementById('target-host').value;
+            const portRange = document.getElementById('port-range').value;
+            const scanType = document.getElementById('scan-type').value;
+            const resultsDiv = document.getElementById('port-results');
+            
+            if (!host) {
+                alert('Please enter a target host');
+                return;
+            }
+            
+            resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Starting port scan...</div>';
+            
+            // Simulate port scanning
+            setTimeout(() => {
+                const results = simulatePortScan(host, portRange, scanType);
+                displayPortResults(results);
+                updateStats();
+            }, 2000);
+        }
+
+        function simulatePortScan(host, portRange, scanType) {
+            const commonPorts = [22, 23, 25, 53, 80, 110, 143, 443, 993, 995, 1433, 3306, 3389, 5432, 8080];
+            const results = [];
+            
+            // Parse port range
+            let ports = [];
+            if (portRange.includes('-')) {
+                const [start, end] = portRange.split('-').map(n => parseInt(n));
+                for (let i = start; i <= Math.min(end, 1000); i++) {
+                    ports.push(i);
+                }
+            } else if (portRange.includes(',')) {
+                ports = portRange.split(',').map(n => parseInt(n.trim()));
+            }
+            
+            // Simulate scanning
+            ports.forEach(port => {
+                if (commonPorts.includes(port) || Math.random() < 0.1) {
+                    const service = getServiceName(port);
+                    const version = getRandomVersion(service);
+                    results.push({
+                        port: port,
+                        state: 'open',
+                        service: service,
+                        version: version,
+                        risk: assessPortRisk(port, service)
+                    });
+                }
+            });
+            
+            scanData.hosts.push(host);
+            scanData.openPorts = scanData.openPorts.concat(results);
+            return results;
+        }
+
+        function getServiceName(port) {
+            const services = {
+                22: 'SSH', 23: 'Telnet', 25: 'SMTP', 53: 'DNS', 80: 'HTTP',
+                110: 'POP3', 143: 'IMAP', 443: 'HTTPS', 993: 'IMAPS', 995: 'POP3S',
+                1433: 'MSSQL', 3306: 'MySQL', 3389: 'RDP', 5432: 'PostgreSQL', 8080: 'HTTP-Alt'
+            };
+            return services[port] || 'Unknown';
+        }
+
+        function getRandomVersion(service) {
+            const versions = {
+                'SSH': ['OpenSSH 7.4', 'OpenSSH 8.0', 'OpenSSH 6.7'],
+                'HTTP': ['Apache 2.4.41', 'nginx 1.18.0', 'IIS 10.0'],
+                'HTTPS': ['Apache 2.4.41', 'nginx 1.18.0', 'IIS 10.0'],
+                'MySQL': ['MySQL 5.7.28', 'MySQL 8.0.19'],
+                'PostgreSQL': ['PostgreSQL 12.2', 'PostgreSQL 11.7']
+            };
+            const serviceVersions = versions[service] || ['Unknown'];
+            return serviceVersions[Math.floor(Math.random() * serviceVersions.length)];
+        }
+
+        function assessPortRisk(port, service) {
+            const highRisk = [23, 1433, 3389]; // Telnet, MSSQL, RDP
+            const mediumRisk = [22, 25, 3306, 5432]; // SSH, SMTP, MySQL, PostgreSQL
+            
+            if (highRisk.includes(port)) return 'high';
+            if (mediumRisk.includes(port)) return 'medium';
+            return 'low';
+        }
+
+        function displayPortResults(results) {
+            const resultsDiv = document.getElementById('port-results');
+            
+            if (results.length === 0) {
+                resultsDiv.innerHTML = '<p style="color: #666;">No open ports found.</p>';
+                return;
+            }
+            
+            let html = '<h4>Open Ports Found:</h4>';
+            results.forEach(result => {
+                html += `
+                    <div style="background: white; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid ${getRiskColor(result.risk)};">
+                        <strong>Port ${result.port}</strong> - ${result.service}<br>
+                        <small>Version: ${result.version} | Risk: ${result.risk.toUpperCase()}</small>
+                    </div>
+                `;
+            });
+            
+            resultsDiv.innerHTML = html;
+        }
+
+        function getRiskColor(risk) {
+            const colors = { low: '#28a745', medium: '#ffc107', high: '#dc3545' };
+            return colors[risk] || '#6c757d';
+        }
+
+        // Vulnerability Assessment
+        function startVulnAssessment() {
+            const target = document.getElementById('vuln-target').value;
+            const type = document.getElementById('vuln-type').value;
+            const resultsDiv = document.getElementById('vuln-results');
+            
+            if (!target) {
+                alert('Please enter a target system');
+                return;
+            }
+            
+            resultsDiv.classList.add('show');
+            resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Scanning for vulnerabilities...</div>';
+            
+            setTimeout(() => {
+                const vulns = simulateVulnerabilityAssessment(target, type);
+                displayVulnerabilities(vulns);
+                updateStats();
+            }, 3000);
+        }
+
+        function simulateVulnerabilityAssessment(target, type) {
+            const vulnerabilities = [
+                {
+                    id: 'CVE-2023-0001',
+                    title: 'Outdated SSL/TLS Configuration',
+                    severity: 'high',
+                    description: 'The server is using outdated SSL/TLS protocols (TLS 1.0/1.1) which are vulnerable to various attacks.',
+                    remediation: ['Upgrade to TLS 1.2 or higher', 'Disable weak cipher suites', 'Update server configuration']
+                },
+                {
+                    id: 'CVE-2023-0002',
+                    title: 'Default Credentials',
+                    severity: 'critical',
+                    description: 'System is using default administrative credentials which can be easily compromised.',
+                    remediation: ['Change default passwords immediately', 'Implement strong password policy', 'Enable two-factor authentication']
+                },
+                {
+                    id: 'CVE-2023-0003',
+                    title: 'Unpatched Software Components',
+                    severity: 'medium',
+                    description: 'Several software components are running outdated versions with known security vulnerabilities.',
+                    remediation: ['Update all software components', 'Implement automated patch management', 'Regular vulnerability scanning']
+                },
+                {
+                    id: 'CVE-2023-0004',
+                    title: 'Open Database Port',
+                    severity: 'high',
+                    description: 'Database service is accessible from external networks without proper access controls.',
+                    remediation: ['Configure firewall rules', 'Implement database access controls', 'Use VPN for remote access']
+                },
+                {
+                    id: 'CVE-2023-0005',
+                    title: 'Missing Security Headers',
+                    severity: 'low',
+                    description: 'Web application is missing important security headers that help prevent XSS and other attacks.',
+                    remediation: ['Add Content-Security-Policy header', 'Implement HSTS', 'Add X-Frame-Options header']
+                }
+            ];
+            
+            // Return random subset based on scan type
+            const count = type === 'comprehensive' ? 5 : Math.floor(Math.random() * 3) + 2;
+            const selectedVulns = vulnerabilities.slice(0, count);
+            
+            scanData.vulnerabilities = scanData.vulnerabilities.concat(selectedVulns);
+            return selectedVulns;
+        }
+
+        function displayVulnerabilities(vulns) {
+            const resultsDiv = document.getElementById('vuln-results');
+            
+            if (vulns.length === 0) {
+                resultsDiv.innerHTML = '<p style="color: #28a745;">✅ No vulnerabilities found!</p>';
+                return;
+            }
+            
+            let html = '<h3>Vulnerabilities Found</h3>';
+            vulns.forEach(vuln => {
+                html += `
+                    <div class="vulnerability ${vuln.severity}">
+                        <div class="vuln-header">
+                            <div class="vuln-title">${vuln.title}</div>
+                            <span class="severity-badge ${vuln.severity}">${vuln.severity}</span>
+                        </div>
+                        <div class="vuln-description">${vuln.description}</div>
+                        <div class="remediation">
+                            <h4>🔧 Remediation Steps:</h4>
+                            <ul>
+                                ${vuln.remediation.map(step => `<li>${step}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            resultsDiv.innerHTML = html;
+        }
+
+        // SSL/TLS Analysis
+        function analyzeSSL() {
+            const host = document.getElementById('ssl-host').value;
+            const port = document.getElementById('ssl-port').value;
+            const resultsDiv = document.getElementById('ssl-results');
+            
+            if (!host) {
+                alert('Please enter a target host');
+                return;
+            }
+            
+            resultsDiv.classList.add('show');
+            resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Analyzing SSL/TLS configuration...</div>';
+            
+            setTimeout(() => {
+                const sslResults = simulateSSLAnalysis(host, port);
+                displaySSLResults(sslResults);
+            }, 2000);
+        }
+
+        function simulateSSLAnalysis(host, port) {
+            const results = {
+                host: host,
+                port: port,
+                certificate: {
+                    subject: `CN=${host}`,
+                    issuer: 'DigiCert Inc',
+                    validFrom: '2023-01-01',
+                    validTo: '2024-12-31',
+                    algorithm: 'RSA 2048',
+                    fingerprint: 'SHA256:1234567890abcdef...'
+                },
+                protocols: ['TLS 1.2', 'TLS 1.3'],
+                ciphers: ['TLS_AES_256_GCM_SHA384', 'TLS_CHACHA20_POLY1305_SHA256'],
+                vulnerabilities: [],
+                grade: 'A+'
+            };
+            
+            // Add some random issues
+            if (Math.random() < 0.3) {
+                results.vulnerabilities.push('Certificate expires within 30 days');
+                results.grade = 'B';
+            }
+            
+            if (Math.random() < 0.2) {
+                results.protocols.push('TLS 1.1');
+                results.vulnerabilities.push('Supports deprecated TLS 1.1');
+                results.grade = 'C';
+            }
+            
+            scanData.sslResults.push(results);
+            return results;
+        }
+
+        function displaySSLResults(results) {
+            const resultsDiv = document.getElementById('ssl-results');
+            
+            let html = `
+                <h3>SSL/TLS Analysis Results</h3>
+                <div class="stat-card" style="margin-bottom: 20px;">
+                    <div class="stat-number" style="color: ${getGradeColor(results.grade)};">${results.grade}</div>
+                    <div class="stat-label">Security Grade</div>
+                </div>
+                
+                <div style="background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                    <h4>Certificate Information</h4>
+                    <p><strong>Subject:</strong> ${results.certificate.subject}</p>
+                    <p><strong>Issuer:</strong> ${results.certificate.issuer}</p>
+                    <p><strong>Valid From:</strong> ${results.certificate.validFrom}</p>
+                    <p><strong>Valid To:</strong> ${results.certificate.validTo}</p>
+                    <p><strong>Algorithm:</strong> ${results.certificate.algorithm}</p>
+                </div>
+                
+                <div style="background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                    <h4>Supported Protocols</h4>
+                    <p>${results.protocols.join(', ')}</p>
+                </div>
+                
+                <div style="background: white; padding: 20px; border-radius: 10px;">
+                    <h4>Top Cipher Suites</h4>
+                    <p>${results.ciphers.join(', ')}</p>
+                </div>
+            `;
+            
+            if (results.vulnerabilities.length > 0) {
+                html += `
+                    <div style="background: #f8d7da; padding: 20px; border-radius: 10px; margin-top: 20px; border-left: 4px solid #dc3545;">
+                        <h4>⚠️ Issues Found</h4>
+                        <ul>
+                            ${results.vulnerabilities.map(vuln => `<li>${vuln}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+            
+            resultsDiv.innerHTML = html;
+        }
+
+        function getGradeColor(grade) {
+            const colors = {
+                'A+': '#28a745', 'A': '#28a745', 'A-': '#28a745',
+                'B+': '#ffc107', 'B': '#ffc107', 'B-': '#ffc107',
+                'C+': '#fd7e14', 'C': '#fd7e14', 'C-': '#fd7e14',
+                'D': '#dc3545', 'F': '#dc3545'
+            };
+            return colors[grade] || '#6c757d';
+        }
+
+        // Password Audit
+        function auditPasswords() {
+            const passwordList = document.getElementById('password-list').value;
+            const resultsDiv = document.getElementById('password-results');
+            
+            if (!passwordList.trim()) {
+                alert('Please enter passwords to audit');
+                return;
+            }
+            
+            const passwords = passwordList.split('\n').filter(p => p.trim());
+            const policies = {
+                minLength: document.getElementById('min-length').checked,
+                uppercase: document.getElementById('uppercase').checked,
+                lowercase: document.getElementById('lowercase').checked,
+                numbers: document.getElementById('numbers').checked,
+                specialChars: document.getElementById('special-chars').checked,
+                noDictionary: document.getElementById('no-dictionary').checked
+            };
+            
+            resultsDiv.classList.add('show');
+            resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Auditing passwords...</div>';
+            
+            setTimeout(() => {
+                const auditResults = performPasswordAudit(passwords, policies);
+                displayPasswordResults(auditResults, passwords.length);
+            }, 1500);
+        }
+
+        function performPasswordAudit(passwords, policies) {
+            const commonPasswords = ['password', '123456', 'admin', 'qwerty', 'letmein', 'welcome', 'monkey'];
+            const results = [];
+            
+            passwords.forEach((password, index) => {
+                const analysis = {
+                    password: password,
+                    strength: 'weak',
+                    score: 0,
+                    issues: [],
+                    suggestions: []
+                };
+                
+                // Check length
+                if (policies.minLength && password.length < 8) {
+                    analysis.issues.push('Password too short (minimum 8 characters)');
+                    analysis.suggestions.push('Use at least 8 characters');
+                } else {
+                    analysis.score += 20;
+                }
+                
+                // Check character types
+                if (policies.uppercase && !/[A-Z]/.test(password)) {
+                    analysis.issues.push('Missing uppercase letters');
+                    analysis.suggestions.push('Add uppercase letters');
+                } else if (policies.uppercase) {
+                    analysis.score += 15;
+                }
+                
+                if (policies.lowercase && !/[a-z]/.test(password)) {
+                    analysis.issues.push('Missing lowercase letters');
+                    analysis.suggestions.push('Add lowercase letters');
+                } else if (policies.lowercase) {
+                    analysis.score += 15;
+                }
+                
+                if (policies.numbers && !/[0-9]/.test(password)) {
+                    analysis.issues.push('Missing numbers');
+                    analysis.suggestions.push('Add numbers');
+                } else if (policies.numbers) {
+                    analysis.score += 15;
+                }
+                
+                if (policies.specialChars && !/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+                    analysis.issues.push('Missing special characters');
+                    analysis.suggestions.push('Add special characters (!@#$%^&*)');
+                } else if (policies.specialChars) {
+                    analysis.score += 15;
+                }
+                
+                // Check against common passwords
+                if (policies.noDictionary && commonPasswords.includes(password.toLowerCase())) {
+                    analysis.issues.push('Common/dictionary password');
+                    analysis.suggestions.push('Use a unique, non-dictionary password');
+                    analysis.score -= 30;
+                } else if (policies.noDictionary) {
+                    analysis.score += 20;
+                }
+                
+                // Determine strength
+                if (analysis.score >= 80) analysis.strength = 'strong';
+                else if (analysis.score >= 60) analysis.strength = 'medium';
+                else analysis.strength = 'weak';
+                
+                results.push(analysis);
+            });
+            
+            scanData.passwordAudit = results;
+            return results;
+        }
+
+        function displayPasswordResults(results, totalPasswords) {
+            const resultsDiv = document.getElementById('password-results');
+            
+            const strongCount = results.filter(r => r.strength === 'strong').length;
+            const mediumCount = results.filter(r => r.strength === 'medium').length;
+            const weakCount = results.filter(r => r.strength === 'weak').length;
+            
+            let html = `
+                <h3>Password Audit Results</h3>
+                <div class="summary-stats" style="margin-bottom: 30px;">
+                    <div class="stat-card">
+                        <div class="stat-number" style="color: #28a745;">${strongCount}</div>
+                        <div class="stat-label">Strong</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" style="color: #ffc107;">${mediumCount}</div>
+                        <div class="stat-label">Medium</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" style="color: #dc3545;">${weakCount}</div>
+                        <div class="stat-label">Weak</div>
+                    </div>
+                </div>
+                
+                <h4>Individual Password Analysis</h4>
+            `;
+            
+            results.forEach((result, index) => {
+                html += `
+                    <div class="vulnerability ${result.strength === 'strong' ? 'low' : result.strength === 'medium' ? 'medium' : 'critical'}">
+                        <div class="vuln-header">
+                            <div class="vuln-title">Password ${index + 1}</div>
+                            <span class="severity-badge ${result.strength === 'strong' ? 'low' : result.strength === 'medium' ? 'medium' : 'critical'}">${result.strength}</span>
+                        </div>
+                        <div class="vuln-description">Score: ${result.score}/100</div>
+                        ${result.issues.length > 0 ? `
+                            <div style="background: #f8d7da; padding: 15px; border-radius: 8px; margin: 10px 0;">
+                                <h4>Issues Found:</h4>
+                                <ul>${result.issues.map(issue => `<li>${issue}</li>`).join('')}</ul>
+                            </div>
+                        ` : ''}
+                        ${result.suggestions.length > 0 ? `
+                            <div class="remediation">
+                                <h4>🔧 Improvement Suggestions:</h4>
+                                <ul>${result.suggestions.map(suggestion => `<li>${suggestion}</li>`).join('')}</ul>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            });
+            
+            resultsDiv.innerHTML = html;
+        }
+
+        // Compliance Check
+        function checkCompliance() {
+            const standard = document.getElementById('compliance-standard').value;
+            const configText = document.getElementById('system-config').value;
+            const resultsDiv = document.getElementById('compliance-results');
+            
+            let config;
+            try {
+                config = JSON.parse(configText || '{}');
+            } catch (e) {
+                alert('Invalid JSON configuration');
+                return;
+            }
+            
+            resultsDiv.classList.add('show');
+            resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Checking compliance...</div>';
+            
+            setTimeout(() => {
+                const complianceResults = performComplianceCheck(standard, config);
+                displayComplianceResults(complianceResults);
+            }, 2000);
+        }
+
+        function performComplianceCheck(standard, config) {
+            const standards = {
+                'pci-dss': {
+                    name: 'PCI DSS',
+                    requirements: [
+                        { id: '1.1', name: 'Firewall Configuration', check: 'firewall', required: true },
+                        { id: '3.4', name: 'Data Encryption', check: 'encryption', required: true },
+                        { id: '8.1', name: 'User Authentication', check: 'authentication', required: true },
+                        { id: '10.1', name: 'Audit Logging', check: 'logging', required: true },
+                        { id: '7.1', name: 'Access Control', check: 'access_control', required: true }
+                    ]
+                },
+                'hipaa': {
+                    name: 'HIPAA',
+                    requirements: [
+                        { id: '164.312(a)', name: 'Access Control', check: 'access_control', required: true },
+                        { id: '164.312(b)', name: 'Audit Controls', check: 'logging', required: true },
+                        { id: '164.312(c)', name: 'Integrity', check: 'data_integrity', required: true },
+                        { id: '164.312(d)', name: 'Person Authentication', check: 'authentication', required: true },
+                        { id: '164.312(e)', name: 'Transmission Security', check: 'encryption', required: true }
+                    ]
+                },
+                'iso27001': {
+                    name: 'ISO 27001',
+                    requirements: [
+                        { id: 'A.9.1', name: 'Access Control Policy', check: 'access_control', required: true },
+                        { id: 'A.10.1', name: 'Cryptographic Controls', check: 'encryption', required: true },
+                        { id: 'A.12.4', name: 'Logging and Monitoring', check: 'logging', required: true },
+                        { id: 'A.13.1', name: 'Network Security', check: 'firewall', required: true },
+                        { id: 'A.14.1', name: 'Secure Development', check: 'secure_development', required: false }
+                    ]
+                }
+            };
+            
+            const selectedStandard = standards[standard] || standards['pci-dss'];
+            const results = {
+                standard: selectedStandard.name,
+                totalRequirements: selectedStandard.requirements.length,
+                passed: 0,
+                failed: 0,
+                details: []
+            };
+            
+            selectedStandard.requirements.forEach(req => {
+                const configValue = config[req.check];
+                const passed = configValue === true || (typeof configValue === 'string' && configValue.length > 0);
+                
+                if (passed) {
+                    results.passed++;
+                } else {
+                    results.failed++;
+                }
+                
+                results.details.push({
+                    id: req.id,
+                    name: req.name,
+                    status: passed ? 'PASS' : 'FAIL',
+                    required: req.required,
+                    recommendation: passed ? 'Compliant' : getComplianceRecommendation(req.check)
+                });
+            });
+            
+            results.complianceScore = Math.round((results.passed / results.totalRequirements) * 100);
+            
+            scanData.complianceResults.push(results);
+            return results;
+        }
+
+        function getComplianceRecommendation(check) {
+            const recommendations = {
+                'firewall': 'Configure and enable firewall protection',
+                'encryption': 'Implement strong encryption for data at rest and in transit',
+                'authentication': 'Set up multi-factor authentication',
+                'logging': 'Enable comprehensive audit logging',
+                'access_control': 'Implement role-based access controls',
+                'data_integrity': 'Deploy data integrity monitoring',
+                'secure_development': 'Follow secure coding practices'
+            };
+            return recommendations[check] || 'Review and implement required controls';
+        }
+
+        function displayComplianceResults(results) {
+            const resultsDiv = document.getElementById('compliance-results');
+            
+            let html = `
+                <h3>${results.standard} Compliance Check</h3>
+                <div class="stat-card" style="margin-bottom: 20px;">
+                    <div class="stat-number" style="color: ${results.complianceScore >= 80 ? '#28a745' : results.complianceScore >= 60 ? '#ffc107' : '#dc3545'};">${results.complianceScore}%</div>
+                    <div class="stat-label">Compliance Score</div>
+                </div>
+                
+                <div class="summary-stats" style="margin-bottom: 30px;">
+                    <div class="stat-card">
+                        <div class="stat-number" style="color: #28a745;">${results.passed}</div>
+                        <div class="stat-label">Passed</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" style="color: #dc3545;">${results.failed}</div>
+                        <div class="stat-label">Failed</div>
+                    </div>
+                </div>
+                
+                <h4>Detailed Requirements</h4>
+            `;
+            
+            results.details.forEach(detail => {
+                html += `
+                    <div class="vulnerability ${detail.status === 'PASS' ? 'low' : 'high'}">
+                        <div class="vuln-header">
+                            <div class="vuln-title">${detail.id} - ${detail.name}</div>
+                            <span class="severity-badge ${detail.status === 'PASS' ? 'low' : 'high'}">${detail.status}</span>
+                        </div>
+                        <div class="remediation">
+                            <h4>📋 Recommendation:</h4>
+                            <p>${detail.recommendation}</p>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            resultsDiv.innerHTML = html;
+        }
+
+        // Report Generation
+        function generateReport() {
+            const reportType = document.getElementById('report-type').value;
+            const resultsDiv = document.getElementById('report-results');
+            
+            resultsDiv.classList.add('show');
+            resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Generating report...</div>';
+            
+            setTimeout(() => {
+                const report = createSecurityReport(reportType);
+                displayReport(report);
+            }, 1500);
+        }
+
+        function createSecurityReport(type) {
+            const totalHosts = [...new Set(scanData.hosts)].length;
+            const totalPorts = scanData.openPorts.length;
+            const totalVulns = scanData.vulnerabilities.length;
+            const criticalVulns = scanData.vulnerabilities.filter(v => v.severity === 'critical').length;
+            
+            const report = {
+                type: type,
+                timestamp: new Date().toISOString(),
+                summary: {
+                    hostsScanned: totalHosts,
+                    openPorts: totalPorts,
+                    vulnerabilities: totalVulns,
+                    criticalVulnerabilities: criticalVulns,
+                    riskScore: calculateRiskScore()
+                },
+                details: scanData
+            };
+            
+            return report;
+        }
+
+        function calculateRiskScore() {
+            let score = 0;
+            
+            // Port-based risk
+            scanData.openPorts.forEach(port => {
+                if (port.risk === 'high') score += 15;
+                else if (port.risk === 'medium') score += 10;
+                else score += 5;
+            });
+            
+            // Vulnerability-based risk
+            scanData.vulnerabilities.forEach(vuln => {
+                if (vuln.severity === 'critical') score += 25;
+                else if (vuln.severity === 'high') score += 20;
+                else if (vuln.severity === 'medium') score += 10;
+                else score += 5;
+            });
+            
+            return Math.min(score, 100);
+        }
+
+        function displayReport(report) {
+            const resultsDiv = document.getElementById('report-results');
+            
+            let html = '';
+            
+            if (report.type === 'executive') {
+                html = `
+                    <h3>Executive Security Summary</h3>
+                    <div class="summary-stats">
+                        <div class="stat-card">
+                            <div class="stat-number">${report.summary.hostsScanned}</div>
+                            <div class="stat-label">Systems Audited</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" style="color: ${report.summary.criticalVulnerabilities > 0 ? '#dc3545' : '#28a745'};">${report.summary.criticalVulnerabilities}</div>
+                            <div class="stat-label">Critical Issues</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" style="color: ${report.summary.riskScore > 70 ? '#dc3545' : report.summary.riskScore > 40 ? '#ffc107' : '#28a745'};">${report.summary.riskScore}</div>
+                            <div class="stat-label">Risk Score</div>
+                        </div>
+                    </div>
+                    
+                    <div style="background: white; padding: 25px; border-radius: 12px; margin-top: 20px;">
+                        <h4>Key Findings</h4>
+                        <p>• ${report.summary.vulnerabilities} security vulnerabilities identified across ${report.summary.hostsScanned} systems</p>
+                        <p>• ${report.summary.criticalVulnerabilities} critical vulnerabilities requiring immediate attention</p>
+                        <p>• ${report.summary.openPorts} network services exposed</p>
+                        <p>• Overall risk level: ${report.summary.riskScore > 70 ? 'HIGH' : report.summary.riskScore > 40 ? 'MEDIUM' : 'LOW'}</p>
+                        
+                        <h4 style="margin-top: 20px;">Recommendations</h4>
+                        <ul style="margin-left: 20px;">
+                            <li>Address all critical vulnerabilities within 24-48 hours</li>
+                            <li>Implement regular security scanning and monitoring</li>
+                            <li>Update security policies and procedures</li>
+                            <li>Provide security awareness training for staff</li>
+                        </ul>
+                    </div>
+                `;
+            } else if (report.type === 'technical') {
+                html = `
+                    <h3>Technical Security Report</h3>
+                    <div style="background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                        <h4>Scan Configuration</h4>
+                        <p><strong>Report Generated:</strong> ${new Date(report.timestamp).toLocaleString()}</p>
+                        <p><strong>Systems Scanned:</strong> ${report.summary.hostsScanned}</p>
+                        <p><strong>Total Findings:</strong> ${report.summary.vulnerabilities}</p>
+                    </div>
+                    
+                    <div style="background: white; padding: 20px; border-radius: 10px;">
+                        <h4>Detailed Findings</h4>
+                        <pre style="background: #f8f9fa; padding: 15px; border-radius: 5px; overflow-x: auto; font-size: 12px;">${JSON.stringify(report.details, null, 2)}</pre>
+                    </div>
+                `;
+            }
+            
+            resultsDiv.innerHTML = html;
+        }
+
+        function exportReport() {
+            const reportType = document.getElementById('report-type').value;
+            const format = document.getElementById('report-format').value;
+            const report = createSecurityReport(reportType);
+            
+            let content, filename, mimeType;
+            
+            if (format === 'json') {
+                content = JSON.stringify(report, null, 2);
+                filename = `security-report-${Date.now()}.json`;
+                mimeType = 'application/json';
+            } else if (format === 'csv') {
+                content = convertToCSV(report);
+                filename = `security-report-${Date.now()}.csv`;
+                mimeType = 'text/csv';
+            } else {
+                content = generateHTMLReport(report);
+                filename = `security-report-${Date.now()}.html`;
+                mimeType = 'text/html';
+            }
+            
+            downloadFile(content, filename, mimeType);
+        }
+
+        function convertToCSV(report) {
+            let csv = 'Type,Severity,Description,Remediation\n';
+            
+            report.details.vulnerabilities.forEach(vuln => {
+                csv += `"${vuln.title}","${vuln.severity}","${vuln.description}","${vuln.remediation.join('; ')}"\n`;
+            });
+            
+            return csv;
+        }
+
+        function generateHTMLReport(report) {
+            return `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Security Audit Report</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 40px; }
+                        .header { text-align: center; margin-bottom: 40px; }
+                        .summary { background: #f8f9fa; padding: 20px; border-radius: 10px; }
+                        .vulnerability { margin: 20px 0; padding: 15px; border-left: 4px solid #dc3545; background: white; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>Security Audit Report</h1>
+                        <p>Generated: ${new Date(report.timestamp).toLocaleString()}</p>
+                    </div>
+                    <div class="summary">
+                        <h2>Summary</h2>
+                        <p>Systems Scanned: ${report.summary.hostsScanned}</p>
+                        <p>Vulnerabilities Found: ${report.summary.vulnerabilities}</p>
+                        <p>Risk Score: ${report.summary.riskScore}/100</p>
+                    </div>
+                    <h2>Detailed Findings</h2>
+                    ${report.details.vulnerabilities.map(vuln => `
+                        <div class="vulnerability">
+                            <h3>${vuln.title} (${vuln.severity.toUpperCase()})</h3>
+                            <p>${vuln.description}</p>
+                            <h4>Remediation:</h4>
+                            <ul>${vuln.remediation.map(r => `<li>${r}</li>`).join('')}</ul>
+                        </div>
+                    `).join('')}
+                </body>
+                </html>
+            `;
+        }
+
+        function downloadFile(content, filename, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        // Utility Functions
+        function stopScan() {
+            // In a real implementation, this would stop ongoing scans
+            alert('Scan stopped (simulated)');
+        }
+
+        function updateStats() {
+            document.getElementById('total-hosts').textContent = [...new Set(scanData.hosts)].length;
+            document.getElementById('open-ports').textContent = scanData.openPorts.length;
+            document.getElementById('vulnerabilities').textContent = scanData.vulnerabilities.length;
+            document.getElementById('risk-score').textContent = calculateRiskScore();
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStats();
+        });
+    </script>
+</body>
+</html>
